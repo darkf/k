@@ -13,8 +13,11 @@ class Node: pass
 Num = node('Num', 'v')
 List = node('List', 'v')
 DyadApply = node('DyadApply', 'l op r')
+MonadApply = node('MonadApply', 'op v')
 
 is_ = isinstance
+
+def is_atom(x): return not is_(x, List)
 
 class InternalError(Exception): pass
 class GeneralError(Exception): pass
@@ -70,8 +73,9 @@ def op_hash(x, y):
                 xs = (xs*copies_needed)[:x.v]
             else: # take
                 xs = xs[:x.v]
-        else: # repeat atom
+        elif is_atom(y): # repeat atom
             xs = [y]*x.v
+        else: raise InternalError("")
         return List(xs)
     return InternalError("op_hash")
 
@@ -79,9 +83,19 @@ def apply_dyad(expr):
     return {"+": op_plus, "*": op_star, "#": op_hash
            }[expr.op](expr.l, expr.r)
 
+def op_hash_m(x): # count (#l)
+    if is_(x, List): return Num(len(x.v))
+    elif is_atom(x): return Num(1)
+    return InternalError("")
+
+def apply_monad(expr):
+    return {"#": op_hash_m
+           }[expr.op](expr.v)
+
 def eval(expr):
     if is_(expr, Num): return expr
     if is_(expr, DyadApply): return apply_dyad(expr)
+    if is_(expr, MonadApply): return apply_monad(expr)
     raise InternalError("unhandled expr: " + repr(expr))
 
 _testsSucceeded = 0
@@ -142,6 +156,10 @@ def tests():
     teq( DyadApply(Num(3), '#', Num(42)), [42, 42, 42] ) # n#a
     teq( DyadApply(Num(3), '#', List(nums(1, 2, 3, 4, 5))), [1, 2, 3] ) # n#l take
     teq( DyadApply(Num(5), '#', List(nums(1, 2))), [1, 2, 1, 2, 1] ) # n#l repeat
+
+    # count
+    teq( MonadApply('#', List(nums(1, 2, 3))), 3 ) # #l
+    teq( MonadApply('#', Num(3)), 1 ) # #a
 
     print("%d tests succeeded, %d tests failed" % (_testsSucceeded, _testsFailed))
 
