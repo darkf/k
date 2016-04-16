@@ -127,6 +127,7 @@ def terr(expr, exc):
 def tests():
     teq( DyadApply(Num(42), '+', Num(8)), 50 )
     teq( DyadApply(List(nums(1, 2, 3)), '+', List(nums(10, 11, 12))), [11, 13, 15] )
+    teq( DyadApply(List([]), '+', List([])), [] )
     terr( DyadApply(List(nums(1, 2, 3)), '+', List(nums(10, 11))), LengthError )
 
     # list length
