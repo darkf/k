@@ -42,10 +42,13 @@ def recursive_shape(v):
     if not is_(v, List): return 0
     return list(map(recursive_shape, v.v))
 
+def zip_with(f, xs, ys):
+    return [f(x, y) for x, y in zip(xs, ys)]
+
 def op_plus(x, y):
     if is_(x, Num) and is_(y, Num): return Num(x.v + y.v)
     if is_(x, List) and is_(y, List):
-        if recursive_shape(x) == recursive_shape(y): return List([op_plus(a, b) for a, b in zip(x.v, y.v)])
+        if recursive_shape(x) == recursive_shape(y): return List(zip_with(op_plus, x.v, y.v))
         else: raise LengthError(x, y)
     raise TypeError(x, y)
 
