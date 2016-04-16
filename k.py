@@ -45,15 +45,22 @@ def recursive_shape(v):
 def zip_with(f, xs, ys):
     return [f(x, y) for x, y in zip(xs, ys)]
 
-def op_plus(x, y):
-    if is_(x, Num) and is_(y, Num): return Num(x.v + y.v)
+def elementwise(f, x, y):
     if is_(x, List) and is_(y, List):
-        if recursive_shape(x) == recursive_shape(y): return List(zip_with(op_plus, x.v, y.v))
+        if recursive_shape(x) == recursive_shape(y): return List(zip_with(f, x.v, y.v))
         else: raise LengthError(x, y)
     raise TypeError(x, y)
 
+def op_plus(x, y):
+    if is_(x, Num) and is_(y, Num): return Num(x.v + y.v)
+    return elementwise(op_plus, x, y)
+
+def op_star(x, y):
+    if is_(x, Num) and is_(y, Num): return Num(x.v * y.v)
+    return elementwise(op_star, x, y)
+
 def apply_dyad(expr):
-    return {"+": op_plus
+    return {"+": op_plus, "*": op_star
            }[expr.op](expr.l, expr.r)
 
 def eval(expr):
@@ -107,6 +114,9 @@ def tests():
 
     teq( DyadApply(matrix, '+', matrix), [[2,4], [6,8]] ) # double matrix
     terr( DyadApply(matrix, '+', to_k([[2,4], [6,8,9]])), LengthError )
+
+    teq( DyadApply(matrix, '*', matrix), [[1,4], [9,16]] ) # square the matrix elementwise
+    terr( DyadApply(matrix, '*', to_k([[2,4], [6,8,9]])), LengthError )
 
     # more complex list
     assert recursive_shape(List( [List([Num(1), List(nums(10, 11)), Num(3)]),
