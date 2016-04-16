@@ -1,4 +1,4 @@
-import operator
+import operator, math
 
 def node(name, props):
     def set_props(self, *propvs):
@@ -59,8 +59,24 @@ def op_star(x, y):
     if is_(x, Num) and is_(y, Num): return Num(x.v * y.v)
     return elementwise(op_star, x, y)
 
+def op_hash(x, y):
+    if is_(x, Num): # take (n#l or n#a)
+        if is_(y, List):
+            xs = y.v
+            if len(y.v) < x.v: # repeat
+                # make enough copies needed to repeat x times, then
+                # take exactly x items.
+                copies_needed = math.ceil(x.v / len(y.v))
+                xs = (xs*copies_needed)[:x.v]
+            else: # take
+                xs = xs[:x.v]
+        else: # repeat atom
+            xs = [y]*x.v
+        return List(xs)
+    return InternalError("op_hash")
+
 def apply_dyad(expr):
-    return {"+": op_plus, "*": op_star
+    return {"+": op_plus, "*": op_star, "#": op_hash
            }[expr.op](expr.l, expr.r)
 
 def eval(expr):
@@ -121,6 +137,11 @@ def tests():
     # more complex list
     assert recursive_shape(List( [List([Num(1), List(nums(10, 11)), Num(3)]),
                                   List(nums(3, 4, 5, 6, 7))] )) == [[0, [0, 0], 0], [0, 0, 0, 0, 0]]
+
+    # take
+    teq( DyadApply(Num(3), '#', Num(42)), [42, 42, 42] ) # n#a
+    teq( DyadApply(Num(3), '#', List(nums(1, 2, 3, 4, 5))), [1, 2, 3] ) # n#l take
+    teq( DyadApply(Num(5), '#', List(nums(1, 2))), [1, 2, 1, 2, 1] ) # n#l repeat
 
     print("%d tests succeeded, %d tests failed" % (_testsSucceeded, _testsFailed))
 
