@@ -53,24 +53,38 @@ def eval(expr):
     if is_(expr, DyadApply): return apply_dyad(expr)
     raise InternalError("unhandled expr: " + repr(expr))
 
+_testsSucceeded = 0
+_testsFailed = 0
+
 def teq(expr, expected):
+    global _testsSucceeded, _testsFailed
     v = eval(expr)
     if not isinstance(expected, Node):
         expected = to_k(expected)
     if v != expected:
         print("FAIL: Got %r, expected %r" % (v, expected))
+        _testsFailed += 1
+    else: _testsSucceeded += 1
 
 def terr(expr, exc):
+    global _testsSucceeded, _testsFailed
     try: eval(expr)
     except Exception as e:
         if not isinstance(e, exc):
             print("FAIL: Expected failure with %r, got failure with %r" % (exc, e))
-    else: print("FAIL: Expected failure with %r, but succeeded" % exc)
+            _testsFailed += 1
+        else:
+            _testsSucceeded += 1
+    else:
+        print("FAIL: Expected failure with %r, but succeeded" % exc)
+        _testsFailed += 1
 
 def tests():
     teq( DyadApply(Num(42), '+', Num(8)), 50 )
     teq( DyadApply(List(nums(1, 2, 3)), '+', List(nums(10, 11, 12))), [11, 13, 15] )
     terr( DyadApply(List(nums(1, 2, 3)), '+', List(nums(10, 11))), LengthError )
+
+    print("%d tests succeeded, %d tests failed" % (_testsSucceeded, _testsFailed))
 
 def main():
     tests()
