@@ -37,12 +37,17 @@ def to_dyad(f):
 
 def nums(*args): return list(map(Num, args))
 
+def recursive_shape(v):
+    "A helper function for returning the shape of possibly nested lists, for the purpose of comparing list shapes."
+    if not is_(v, List): return 0
+    return list(map(recursive_shape, v.v))
+
 def op_plus(x, y):
     if is_(x, Num) and is_(y, Num): return Num(x.v + y.v)
     if is_(x, List) and is_(y, List):
-        if len(x.v) == len(y.v): return List([op_plus(a, b) for a, b in zip(x.v, y.v)])
+        if recursive_shape(x) == recursive_shape(y): return List([op_plus(a, b) for a, b in zip(x.v, y.v)])
         else: raise LengthError(x, y)
-    raise InternalError("op_plus")
+    raise TypeError(x, y)
 
 def apply_dyad(expr):
     return {"+": op_plus
@@ -83,6 +88,26 @@ def tests():
     teq( DyadApply(Num(42), '+', Num(8)), 50 )
     teq( DyadApply(List(nums(1, 2, 3)), '+', List(nums(10, 11, 12))), [11, 13, 15] )
     terr( DyadApply(List(nums(1, 2, 3)), '+', List(nums(10, 11))), LengthError )
+
+    # list length
+    assert recursive_shape(List([])) == []
+    assert recursive_shape(List([Num(1)])) == [0]
+    assert recursive_shape(List(nums(1, 2, 3))) == [0, 0, 0]
+
+    # multi-dimensional lists
+
+    # 2x2 list/matrix
+    matrix = List([List(nums(1, 2)),
+                   List(nums(3, 4))])
+
+    assert recursive_shape(matrix) == [[0, 0], [0, 0]]
+
+    teq( DyadApply(matrix, '+', matrix), [[2,4], [6,8]] ) # double matrix
+    terr( DyadApply(matrix, '+', to_k([[2,4], [6,8,9]])), LengthError )
+
+    # more complex list
+    assert recursive_shape(List( [List([Num(1), List(nums(10, 11)), Num(3)]),
+                                  List(nums(3, 4, 5, 6, 7))] )) == [[0, [0, 0], 0], [0, 0, 0, 0, 0]]
 
     print("%d tests succeeded, %d tests failed" % (_testsSucceeded, _testsFailed))
 
