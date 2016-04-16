@@ -31,7 +31,7 @@ def to_k(v):
 
 def from_k(v):
     if is_(v, Num): return v.v
-    if is_(v, List): return v.v
+    if is_(v, List): return list(map(from_k, v.v))
     raise InternalError("from_k: unhandled value " + repr(v))
 
 def to_dyad(f):
@@ -48,6 +48,11 @@ def recursive_shape(v):
 def zip_with(f, xs, ys):
     return [f(x, y) for x, y in zip(xs, ys)]
 
+def product(xs):
+    prod = 1
+    for x in xs: prod *= x
+    return prod
+
 def elementwise(f, x, y):
     if is_(x, List) and is_(y, List):
         if recursive_shape(x) == recursive_shape(y): return List(zip_with(f, x.v, y.v))
@@ -61,6 +66,42 @@ def op_plus(x, y):
 def op_star(x, y):
     if is_(x, Num) and is_(y, Num): return Num(x.v * y.v)
     return elementwise(op_star, x, y)
+
+def repeat_list(x, n):
+    "If the list x is shorter than n, then repeat elements of x until its length is equal to n."
+    if len(x.v) < n:
+        # make enough copies needed to repeat enough times for n, then
+        # take exactly n items.
+        copies_needed = math.ceil(n / len(x.v))
+        return List((x.v*copies_needed)[:n])
+    else: # take
+        return List(x.v[:n])
+
+def reshape(x, shape, start=0):
+    if shape == []:
+        return List([])
+
+    if is_atom(x): # l#a
+        # build a list of the atom in the desired shape
+        if len(shape) == 1: # repeat
+            return List([x]*shape[0])
+        return List([ reshape(x, shape[1:]) for _ in range(shape[0]) ])
+    elif is_(x, List): # l#l
+        # print("shape:", shape)
+
+        if len(shape) == 1: # single dimension
+            end = start+shape[0]
+
+            if len(x.v) < end: # if we need to, extend the list by repeating it
+                # starting where we left off, instead of the beginning.
+                x = repeat_list(x, end)
+            return List( x.v[start:end] )
+        else: # multi-dimensional
+            # build a list of rows with incremental starting indices.
+            # for each row, we increment start by the size of that row (and the sizes of all of _its_ rows, recursively)
+            # so that we remember where we left off in the list in the previous row.
+            rowSize = product(shape[1:])
+            return List([ reshape(x, shape[1:], start=start + row*rowSize) for row in range(shape[0]) ])
 
 def op_hash(x, y):
     if is_(x, Num): # take (n#l or n#a)
@@ -77,6 +118,9 @@ def op_hash(x, y):
             xs = [y]*x.v
         else: raise InternalError("")
         return List(xs)
+    elif is_(x, List): # l#l or l#a (reshape)
+        shape = [from_k(dim) for dim in x.v]
+        return reshape(y, shape)
     return InternalError("op_hash")
 
 def apply_dyad(expr):
@@ -157,6 +201,37 @@ def tests():
     teq( DyadApply(Num(3), '#', Num(42)), [42, 42, 42] ) # n#a
     teq( DyadApply(Num(3), '#', List(nums(1, 2, 3, 4, 5))), [1, 2, 3] ) # n#l take
     teq( DyadApply(Num(5), '#', List(nums(1, 2))), [1, 2, 1, 2, 1] ) # n#l repeat
+
+    # reshape
+    teq( DyadApply(List([Num(3)]), '#', Num(5)), [ 5, 5, 5 ] ) # l#a reshape
+    teq( DyadApply(List(nums(2, 2)), '#', Num(5)), [ [5, 5], [5, 5] ] ) # l#a reshape
+    teq( DyadApply(List(nums(2, 2)), '#', List(nums(1, 2, 3, 4))), [ [1, 2], [3, 4] ] ) # l#a reshape (1d -> 2d)
+    teq( DyadApply(List(nums(2, 2)), '#', List(nums(1, 2))), [ [1, 2], [1, 2] ] ) # l#a reshape (repeat 2d)
+    teq( DyadApply(List(nums(2, 2)), '#', List(nums(1, 2, 3, 4))), [ [1, 2], [3, 4] ] ) # l#a reshape (truncating 2d)
+    teq( DyadApply(List(nums(2, 3)), '#', List(nums(1, 2))), [ [1, 2, 1], [2, 1, 2] ] ) # l#a reshape (repeat 2d)
+    teq( DyadApply(List(nums(2, 3)), '#', List(nums(1, 2, 3, 4))), [ [1, 2, 3], [4, 1, 2] ] ) # l#a reshape (repeat 2d)
+    
+    teq( DyadApply(List(nums(2, 2, 2)), '#', List(nums(1, 2, 3))), [   [[1,2],[3,1]], [[2,3],[1,2]]   ] ) # l#a reshape (repeat 3d)
+    # l@a reshape (repeat 3d)
+    teq( DyadApply(List(nums(2, 3, 4)), '#', List(nums(1, 2, 3))), [ [[1, 2, 3, 1],
+                                                                      [2, 3, 1, 2],
+                                                                      [3, 1, 2, 3]],
+                                                                     [[1, 2, 3, 1],
+                                                                      [2, 3, 1, 2],
+                                                                      [3, 1, 2, 3]] ] )
+
+    # l@a reshape (repeat 4d)
+    teq( DyadApply(List(nums(2, 2, 2, 2)), '#', List(nums(1, 2, 3))),  [
+                                                                         [[[1, 2],
+                                                                           [3, 1]],
+                                                                          [[2, 3],
+                                                                           [1, 2]]],
+                                                                         [[[3, 1],
+                                                                           [2, 3]],
+                                                                          [[1, 2],
+                                                                           [3, 1]]] ] )
+
+    # TODO: Test more cases of reshape
 
     # count
     teq( MonadApply('#', List(nums(1, 2, 3))), 3 ) # #l
