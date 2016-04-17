@@ -14,6 +14,8 @@ Num = node('Num', 'v')
 List = node('List', 'v')
 DyadApply = node('DyadApply', 'l op r')
 MonadApply = node('MonadApply', 'op v')
+AdverbMonadApply = node('AdverbMonadApply', 'adv op v')
+AdverbDyadApply = node('AdverbDyadApply', 'adv l op r')
 
 is_ = isinstance
 
@@ -58,6 +60,11 @@ def elementwise(f, x, y):
         if recursive_shape(x) == recursive_shape(y): return List(zip_with(f, x.v, y.v))
         else: raise LengthError(x, y)
     raise TypeError(x, y)
+
+def fold(f, xs, v):
+    for x in xs.v:
+        v = f(x, v)
+    return v
 
 def op_plus(x, y):
     if is_(x, Num) and is_(y, Num): return Num(x.v + y.v)
@@ -140,11 +147,21 @@ def apply_monad(expr):
            ,",": op_comma_m
            }[expr.op](eval(expr.v))
 
+def apply_monad_adverb(expr):
+    if expr.adv == "/": # over
+        initial = None
+        # special cased initial folding values
+        if expr.op == "+": initial = Num(0)
+        elif expr.op == "*": initial = Num(1)
+        return fold(lambda x, acc: eval(DyadApply(acc, expr.op, x)), eval(expr.v), initial)
+    raise InternalError("apply_monad_adverb")
+
 def eval(expr):
     if is_(expr, Num): return expr
     if is_(expr, List): return expr
     if is_(expr, DyadApply): return apply_dyad(expr)
     if is_(expr, MonadApply): return apply_monad(expr)
+    if is_(expr, AdverbMonadApply): return apply_monad_adverb(expr)
     raise InternalError("unhandled expr: " + repr(expr))
 
 _testsSucceeded = 0
@@ -241,6 +258,8 @@ def tests():
     # count
     teq( MonadApply('#', List(nums(1, 2, 3))), 3 ) # #l
     teq( MonadApply('#', Num(3)), 1 ) # #a
+
+    # adverbs
 
     print("%d tests succeeded, %d tests failed" % (_testsSucceeded, _testsFailed))
 

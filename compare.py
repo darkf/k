@@ -27,8 +27,8 @@ _testsFailed = 0
 def t(expr):
     global _testsSucceeded, _testsFailed
     res_ok = eval(expr)
+    ast = parse.parse(expr)[0]
     try:
-        ast = parse.parse(expr)[0]
         res_k = k.eval(ast)
     except Exception as e:
         if res_ok is None:
@@ -51,6 +51,11 @@ def t(expr):
         _testsSucceeded += 1
 
 def tests():
+    t("1+2")
+    t("+/ 1 2 3")
+    t("*/ 1 2 3")
+    return
+
     t("1")
     t("1+2")
     t("1*2")

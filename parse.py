@@ -18,6 +18,9 @@ def to_ast(v):
 	if v['t'] == 8:
 		if 'l' in v: return k.DyadApply(to_ast(v['l']), v['v'], to_ast(v['r']))
 		else: return k.MonadApply(v['v'], to_ast(v['r']))
+	if v['t'] == 9:
+		if 'l' in v: return k.AdverbMonadApply(v['v'], v['verb']['v'], to_ast(v['r']))
+		return k.AdverbDyadApply(v['v'], to_ast(v['l']), v['verb']['v'], to_ast(v['r']))
 
 	raise k.InternalError("to_ast: t=%d | %r" % (v['t'], v))
 
