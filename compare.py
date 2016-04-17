@@ -54,8 +54,12 @@ def t(expr):
 
 def tests():
     t("1+2")
-    t("+/ 1 2 3") # sum
+    t("{{x}x}1")
+    t("{x+y}[42; 8]")
+    t("{{x+y}[x; y]}[42; 8]")
+    return
 
+    t("+/ 1 2 3") # sum
     t("{x}1")
     t("{x+1}1")
     t("{x*2}5")
@@ -66,7 +70,7 @@ def tests():
     t("{{x*{x*5}2}x*4}5")
     t("{x*y}/ 1 2 3")
     
-    #return
+    return
     t("1+2")
     t("+/ 1 2 3") # sum
     t("*/ 1 2 3") # product

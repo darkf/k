@@ -167,10 +167,15 @@ def op_at(x, y):
     if is_(x, Function): return apply_fn(x, [y])
     raise InternalError("op_at")
 
+def op_dot(x, y):
+    if is_(x, Function) and is_(y, List): # dot-apply
+        return apply_fn(x, y.v)
+    raise InternalError("op_dot")
+
 def apply_dyad(expr):
     if is_(expr.op, Verb): expr.op = expr.op.name
     if is_(expr.op, Function): return apply_fn(expr.op, [eval(expr.l), eval(expr.r)]) # function dyad
-    return {"+": op_plus, "*": op_star, "#": op_hash, "@": op_at
+    return {"+": op_plus, "*": op_star, "#": op_hash, "@": op_at, ".": op_dot
            }[expr.op](eval(expr.l), eval(expr.r))
 
 def op_hash_m(x): # count (#l)
@@ -205,7 +210,8 @@ def apply_monad_adverb(expr):
     raise InternalError("apply_monad_adverb")
 
 def eval(expr):
-    if is_(expr, Num) or is_(expr, List) or is_(expr, Function): return expr
+    if is_(expr, Num) or is_(expr, Function): return expr
+    if is_(expr, List): return List(list(map(eval, expr.v)))
     if is_(expr, DyadApply): return apply_dyad(expr)
     if is_(expr, MonadApply): return apply_monad(expr)
     if is_(expr, AdverbMonadApply): return apply_monad_adverb(expr)
