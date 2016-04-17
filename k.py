@@ -132,8 +132,12 @@ def op_hash_m(x): # count (#l)
     elif is_atom(x): return Num(1)
     return InternalError("")
 
+def op_comma_m(x): # enlist (,)
+    return List([x])
+
 def apply_monad(expr):
     return {"#": op_hash_m
+           ,",": op_comma_m
            }[expr.op](eval(expr.v))
 
 def eval(expr):
