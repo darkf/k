@@ -52,10 +52,12 @@ def t(expr):
 
 def tests():
     t("1+2")
-    t("+/ 1 2 3")
-    t("*/ 1 2 3")
-    t("! 3")
-    t("! 10")
+    t("+/ 1 2 3") # sum
+    t("*/ 1 2 3") # product
+    t("! 3") # enumeration
+    t("! 10") # enumeration
+    t("1+!10") # adding to an enumeration
+    t("*/1+!10") # factorial
     return
 
     t("1")

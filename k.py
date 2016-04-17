@@ -68,6 +68,7 @@ def fold(f, xs, v):
 
 def op_plus(x, y):
     if is_(x, Num) and is_(y, Num): return Num(x.v + y.v)
+    if is_(x, Num) and is_(y, List): return List([Num(x.v + v.v) for v in y.v])
     return elementwise(op_plus, x, y)
 
 def op_star(x, y):
