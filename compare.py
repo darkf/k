@@ -24,7 +24,7 @@ reset = "\033[00m"
 _testsSucceeded = 0
 _testsFailed = 0
 
-def cmp(expr):
+def t(expr):
     global _testsSucceeded, _testsFailed
     res_ok = eval(expr)
     try:
@@ -51,12 +51,10 @@ def cmp(expr):
         _testsSucceeded += 1
 
 def tests():
-    t = cmp
-
-    cmp("1")
-    cmp("1+2")
-    cmp("1*2")
-    cmp("1*2+1")
+    t("1")
+    t("1+2")
+    t("1*2")
+    t("1*2+1")
 
     t("42+8")
     t("1 2 3 + 10 11 12")
@@ -93,6 +91,9 @@ def tests():
 
     # l@a reshape (repeat 4d)
     t("2 2 2 2 # 1 2 3")
+
+    # l@a reshape (repeat 5d)
+    t("1 2 3 4 5 # 1 2 3 4 5")
 
     # TODO: Test more cases of reshape
 
