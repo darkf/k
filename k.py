@@ -18,6 +18,7 @@ AdverbMonadApply = node('AdverbMonadApply', 'adv op v')
 AdverbDyadApply = node('AdverbDyadApply', 'adv l op r')
 Function = node('Function', 'args body')
 Var = node('Var', 'name')
+Verb = node('Verb', 'name')
 
 is_ = isinstance
 
@@ -167,6 +168,8 @@ def op_at(x, y):
     raise InternalError("op_at")
 
 def apply_dyad(expr):
+    if is_(expr.op, Verb): expr.op = expr.op.name
+    if is_(expr.op, Function): return apply_fn(expr.op, [eval(expr.l), eval(expr.r)]) # function dyad
     return {"+": op_plus, "*": op_star, "#": op_hash, "@": op_at
            }[expr.op](eval(expr.l), eval(expr.r))
 
@@ -184,18 +187,21 @@ def op_bang_m(x):
     raise InternalError("op_bang_m")
 
 def apply_monad(expr):
+    if is_(expr.op, Verb): expr.op = expr.op.name
     return {"#": op_hash_m
            ,",": op_comma_m
            ,"!": op_bang_m
            }[expr.op](eval(expr.v))
 
 def apply_monad_adverb(expr):
+    if is_(expr.op, Verb): expr.op = expr.op.name
     if expr.adv == "/": # over
-        initial = None
+        xs = eval(expr.v)
+        initial = xs.v[0]
         # special cased initial folding values
         if expr.op == "+": initial = Num(0)
         elif expr.op == "*": initial = Num(1)
-        return fold(lambda x, acc: eval(DyadApply(acc, expr.op, x)), eval(expr.v), initial)
+        return fold(lambda x, acc: eval(DyadApply(acc, expr.op, x)), xs, initial)
     raise InternalError("apply_monad_adverb")
 
 def eval(expr):

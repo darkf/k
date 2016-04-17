@@ -3,24 +3,28 @@
 import subprocess, json, sys
 import k
 
-def ast(expr):
+def ast(expr, raw=False):
 	try:
 		expr = expr.replace("'", "\\'") # escape single quotes
-		output = subprocess.check_output(["node", "-p", "JSON.stringify(require('../ok/ok').parse('%s'))" % expr], stderr=subprocess.STDOUT)
-		return json.loads(output.decode('utf-8'))
+		output = subprocess.check_output(["node", "-p", "JSON.stringify(require('../ok/ok').parse('%s'))" % expr], stderr=subprocess.STDOUT).decode('utf-8')
+		return output if raw else json.loads(output)
 	except subprocess.CalledProcessError:
 		print("parse error")
 		return None
 
 def to_ast(v):
+	if type(v) == str: return v
 	if v['t'] == 0: return k.Num(v['v'])
 	if v['t'] == 3: return k.List(list(map(to_ast, v['v'])))
 	if v['t'] == 8:
-		if 'l' in v: return k.DyadApply(to_ast(v['l']), v['v'], to_ast(v['r']))
-		else: return k.MonadApply(v['v'], to_ast(v['r']))
+		if 'r' in v: # monadic apply
+			if 'l' in v and v['l'] is not None: return k.DyadApply(to_ast(v['l']), v['v'], to_ast(v['r']))
+			else: return k.MonadApply(v['v'], to_ast(v['r']))
+		else: # verb
+			return k.Verb(v['v'])
 	if v['t'] == 9:
-		if 'l' in v: return k.AdverbMonadApply(v['v'], v['verb']['v'], to_ast(v['r']))
-		return k.AdverbDyadApply(v['v'], to_ast(v['l']), v['verb']['v'], to_ast(v['r']))
+		if 'l' in v and v['l'] is not None: return k.AdverbDyadApply(v['v'], to_ast(v['l']), to_ast(v['verb']), to_ast(v['r']))
+		return k.AdverbMonadApply(v['v'], to_ast(v['verb']), to_ast(v['r']))
 	if v['t'] == 5: return k.Function(v['args'], list(map(to_ast, v['v'])))
 	if v['t'] == 7: return k.Var(v['v'])
 

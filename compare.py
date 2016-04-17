@@ -1,6 +1,6 @@
 # Compare our interpreter with the output of oK <https://github.com/JohnEarnest/ok>
 
-import subprocess, json
+import subprocess, json, traceback
 import k, parse
 
 def ok_eval(expr):
@@ -39,6 +39,8 @@ def t(expr):
 
         print(red+"FAIL"+reset+": Got exception %r, expected %r for: %s" % (e, res_ok, expr))
         print("AST: %r" % ast)
+        print("Raw AST: %s" % parse.ast(expr, raw=True))
+        traceback.print_exc()
         _testsFailed += 1
         return
 
@@ -52,14 +54,19 @@ def t(expr):
 
 def tests():
     t("1+2")
+    t("+/ 1 2 3") # sum
 
     t("{x}1")
     t("{x+1}1")
     t("{x*2}5")
     t("{x*x}5")
     t("{x}1 2 3")
+    t("{{x}x}1")
+    t("{{x*2}x*4}5")
+    t("{{x*{x*5}2}x*4}5")
+    t("{x*y}/ 1 2 3")
     
-    return
+    #return
     t("1+2")
     t("+/ 1 2 3") # sum
     t("*/ 1 2 3") # product
