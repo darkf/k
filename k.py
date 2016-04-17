@@ -142,9 +142,15 @@ def op_hash_m(x): # count (#l)
 def op_comma_m(x): # enlist (,)
     return List([x])
 
+def op_bang_m(x):
+    if is_(x, Num): # int (!n)
+        return List(list(map(Num, range(x.v))))
+    raise InternalError("op_bang_m")
+
 def apply_monad(expr):
     return {"#": op_hash_m
            ,",": op_comma_m
+           ,"!": op_bang_m
            }[expr.op](eval(expr.v))
 
 def apply_monad_adverb(expr):
