@@ -138,6 +138,7 @@ def apply_monad(expr):
 
 def eval(expr):
     if is_(expr, Num): return expr
+    if is_(expr, List): return expr
     if is_(expr, DyadApply): return apply_dyad(expr)
     if is_(expr, MonadApply): return apply_monad(expr)
     raise InternalError("unhandled expr: " + repr(expr))
