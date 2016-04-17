@@ -125,7 +125,7 @@ def op_hash(x, y):
 
 def apply_dyad(expr):
     return {"+": op_plus, "*": op_star, "#": op_hash
-           }[expr.op](expr.l, expr.r)
+           }[expr.op](eval(expr.l), eval(expr.r))
 
 def op_hash_m(x): # count (#l)
     if is_(x, List): return Num(len(x.v))
@@ -134,7 +134,7 @@ def op_hash_m(x): # count (#l)
 
 def apply_monad(expr):
     return {"#": op_hash_m
-           }[expr.op](expr.v)
+           }[expr.op](eval(expr.v))
 
 def eval(expr):
     if is_(expr, Num): return expr
