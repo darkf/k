@@ -1,4 +1,4 @@
-import operator, math
+import operator, math, collections
 
 def node(name, props):
     def set_props(self, *propvs):
@@ -16,8 +16,26 @@ DyadApply = node('DyadApply', 'l op r')
 MonadApply = node('MonadApply', 'op v')
 AdverbMonadApply = node('AdverbMonadApply', 'adv op v')
 AdverbDyadApply = node('AdverbDyadApply', 'adv l op r')
+Function = node('Function', 'args body')
+Var = node('Var', 'name')
 
 is_ = isinstance
+
+def newEnv(): return [{}]
+def pushScope(): env.insert(0, {})
+def popScope(): env.pop(0)
+def bind(name, v):
+    for e in env:
+        if name in e:
+            e[name] = v
+            return
+    env[0][name] = v
+def lookup(name):
+    for e in env:
+        if name in e: return e[name]
+    return None
+
+env = newEnv()
 
 def is_atom(x): return not is_(x, List)
 
@@ -25,6 +43,7 @@ class InternalError(Exception): pass
 class GeneralError(Exception): pass
 class TypeError(Exception): pass
 class LengthError(Exception): pass
+class BindingError(Exception): pass
 
 def to_k(v):
     if isinstance(v, int) or isinstance(v, float): return Num(v)
@@ -131,8 +150,24 @@ def op_hash(x, y):
         return reshape(y, shape)
     return InternalError("op_hash")
 
+def apply_fn(f, args):
+    if len(f.args) != len(args):
+        raise LengthError("apply_fn arg length mismatch")
+    r = None # TODO: what is the default value?
+    pushScope()
+    for name, v in zip(f.args, args):
+        bind(name, v)
+    for expr in f.body:
+        r = eval(expr)
+    popScope()
+    return r
+
+def op_at(x, y):
+    if is_(x, Function): return apply_fn(x, [y])
+    raise InternalError("op_at")
+
 def apply_dyad(expr):
-    return {"+": op_plus, "*": op_star, "#": op_hash
+    return {"+": op_plus, "*": op_star, "#": op_hash, "@": op_at
            }[expr.op](eval(expr.l), eval(expr.r))
 
 def op_hash_m(x): # count (#l)
@@ -164,11 +199,15 @@ def apply_monad_adverb(expr):
     raise InternalError("apply_monad_adverb")
 
 def eval(expr):
-    if is_(expr, Num): return expr
-    if is_(expr, List): return expr
+    if is_(expr, Num) or is_(expr, List) or is_(expr, Function): return expr
     if is_(expr, DyadApply): return apply_dyad(expr)
     if is_(expr, MonadApply): return apply_monad(expr)
     if is_(expr, AdverbMonadApply): return apply_monad_adverb(expr)
+    if is_(expr, Var):
+        v = lookup(expr.name)
+        if v is None:
+            raise BindingError("Unbound variable '%s'" % name)
+        return v
     raise InternalError("unhandled expr: " + repr(expr))
 
 _testsSucceeded = 0

@@ -52,6 +52,15 @@ def t(expr):
 
 def tests():
     t("1+2")
+
+    t("{x}1")
+    t("{x+1}1")
+    t("{x*2}5")
+    t("{x*x}5")
+    t("{x}1 2 3")
+    
+    return
+    t("1+2")
     t("+/ 1 2 3") # sum
     t("*/ 1 2 3") # product
     t("! 3") # enumeration
