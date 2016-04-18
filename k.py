@@ -19,6 +19,7 @@ AdverbDyadApply = node('AdverbDyadApply', 'adv l op r')
 Function = node('Function', 'args body')
 Var = node('Var', 'name')
 Verb = node('Verb', 'name')
+Assign = node('Assign', 'name v')
 
 is_ = isinstance
 
@@ -31,6 +32,7 @@ def bind(name, v):
             e[name] = v
             return
     env[0][name] = v
+    return v
 def lookup(name):
     for e in env:
         if name in e: return e[name]
@@ -220,6 +222,7 @@ def eval(expr):
         if v is None:
             raise BindingError("Unbound variable '%s'" % name)
         return v
+    if is_(expr, Assign): return bind(expr.name, eval(expr.v))
     raise InternalError("unhandled expr: " + repr(expr))
 
 _testsSucceeded = 0

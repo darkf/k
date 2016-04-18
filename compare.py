@@ -54,6 +54,11 @@ def t(expr):
 
 def tests():
     t("1+2")
+
+    t("a: 1")
+    t("abc: 1+5")
+    return
+
     t("{{x}x}1")
     t("{x+y}[42; 8]")
     t("{{x+y}[x; y]}[42; 8]")

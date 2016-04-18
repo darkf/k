@@ -26,7 +26,9 @@ def to_ast(v):
 		if 'l' in v and v['l'] is not None: return k.AdverbDyadApply(v['v'], to_ast(v['l']), to_ast(v['verb']), to_ast(v['r']))
 		return k.AdverbMonadApply(v['v'], to_ast(v['verb']), to_ast(v['r']))
 	if v['t'] == 5: return k.Function(v['args'], list(map(to_ast, v['v'])))
-	if v['t'] == 7: return k.Var(v['v'])
+	if v['t'] == 7:
+		if 'r' in v and v['r'] is not None: return k.Assign(v['v'], to_ast(v['r']))
+		return k.Var(v['v'])
 
 	raise k.InternalError("to_ast: t=%d | %r" % (v['t'], v))
 
