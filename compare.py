@@ -56,6 +56,22 @@ def t(expr):
 
 def tests():
     t("1+2")
+    t('"abc"')
+    t('{x[<x]} "cba"') # sort chars
+    t('*"cba"') # first char
+    t('1_"abc"')
+    t('1_"c"')
+    t('1_ 5')
+    t('{1_x}\ "abc"') # tails
+    t(r'{{1_x}\x} "abc"') # tails
+
+    #t(r"{{x[(#x)-1]}'{x@<x}[{1_x,*x}\x]} \"^BANANA|\"")
+    #t(r"{{x[(#x)-1]}'{x@<x}[{1_x,*x}\x]} \"^BANANA|\"")
+
+    # {{1_x,*x}\x} "^BANANA|"
+    # {{1_x,*x}\x} "abc"
+
+    return
     t("{x*2}' 1 2 3")
     t("-:' 1 2 3")
     t("*3 4 5")
@@ -70,7 +86,6 @@ def tests():
     t("{x[(#x)-1]} 2 5 1 3") # last
 
 
-    #t(r"{{x[(#x)-1]}'{x@<x}[{1_x,*x}\x]}[(1 2 3)]")
     return
 
     t("+\\1 2 3")

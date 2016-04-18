@@ -16,6 +16,7 @@ def ast(expr, raw=False):
 def to_ast(v):
 	if type(v) == str: return v
 	if v['t'] == 0: return k.Num(v['v'])
+	if v['t'] == 1: return k.Char(v['v'])
 	if v['t'] == 3: return k.List(list(map(to_ast, v['v'])))
 	if v['t'] == 8:
 		if 'r' in v: # monadic apply

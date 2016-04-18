@@ -11,6 +11,7 @@ def node(name, props):
 
 class Node: pass
 Num = node('Num', 'v')
+Char = node('Char', 'v')
 List = node('List', 'v')
 DyadApply = node('DyadApply', 'l op r')
 MonadApply = node('MonadApply', 'op v')
@@ -22,6 +23,7 @@ Verb = node('Verb', 'name forcemonad')
 Assign = node('Assign', 'name v')
 
 Num.__lt__ = lambda self, other: self.v < other.v
+Char.__lt__ = lambda self, other: self.v < other.v
 
 is_ = isinstance
 
@@ -201,6 +203,7 @@ def op_dot(x, y):
 def op_underscore(x, y):
     if is_(x, Num) and is_(y, List): # drop (n_l)
         return List(y.v[x.v:])
+    if is_(x, Num): return y
     raise InternalError("op_underscore")
 
 def apply_dyad(expr):
@@ -237,6 +240,12 @@ def op_less_than_m(x): # asc
         return List([Num(i) for _,i in sorted_x])
     raise InternalError("op_less_than_m")
 
+def monadic(verb):
+    # TODO: we should really use Verb everywhere
+    if is_(verb, Verb): return verb.forcemonad or monadic(verb.verb)
+    if is_(verb, Function): return len(verb.args) == 1
+    return True # XXX
+
 def apply_monad(expr):
     if is_(expr.op, Verb): expr.op = expr.op.name
     if is_(expr.op, Function): return apply_fn(expr.op, [eval(expr.v)]) # function monad
@@ -256,13 +265,23 @@ def apply_monad_adverb(expr):
         if expr.adv == "/": # over
             return fold(lambda x, acc: eval(DyadApply(acc, expr.op, x)), xs, initial)
         else:
-            return scan(lambda x, acc: eval(DyadApply(acc, expr.op, x)), xs, initial)
+            if monadic(expr.op): # scan-fixedpoint
+                initial = xs
+                r = []; v = initial; v_old = v
+                while True:
+                    r.append(v)
+                    v = eval(MonadApply(expr.op, v))
+                    if v == v_old or v == initial: break
+                    v_old = v
+                return List(r)
+            else: # scan
+                return scan(lambda x, acc: eval(DyadApply(acc, expr.op, x)), xs, initial)
     if expr.adv == "'": # each
         return List(list(map(lambda x: eval(MonadApply(expr.op, x)), eval(expr.v).v)))
     raise InternalError("apply_monad_adverb")
 
 def eval(expr):
-    if is_(expr, Num) or is_(expr, Function): return expr
+    if is_(expr, Num) or is_(expr, Char) or is_(expr, Function): return expr
     if is_(expr, List): return List(list(map(eval, expr.v)))
     if is_(expr, DyadApply): return apply_dyad(expr)
     if is_(expr, MonadApply): return apply_monad(expr)
