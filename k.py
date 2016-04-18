@@ -21,6 +21,8 @@ Var = node('Var', 'name')
 Verb = node('Verb', 'name forcemonad')
 Assign = node('Assign', 'name v')
 
+Num.__lt__ = lambda self, other: self.v < other.v
+
 is_ = isinstance
 
 def newEnv(): return [{}]
@@ -223,10 +225,17 @@ def op_star_m(x):
     if is_(x, List): return x.v[0]
     raise InternalError("op_star_m")
 
+def op_less_than_m(x): # asc
+    if is_(x, List):
+        sorted_x = sorted(((v, i) for i,v in enumerate(x.v)), key=lambda x: x[0]) # x sorted, maintaining indices
+        return List([Num(i) for _,i in sorted_x])
+    raise InternalError("op_less_than_m")
+
 def apply_monad(expr):
     if is_(expr.op, Verb): expr.op = expr.op.name
     if is_(expr.op, Function): return apply_fn(expr.op, [eval(expr.v)]) # function monad
-    return {"#": op_hash_m, ",": op_comma_m, "!": op_bang_m, "-": op_minus_m, "*": op_star_m
+    return {"#": op_hash_m, ",": op_comma_m, "!": op_bang_m, "-": op_minus_m, "*": op_star_m,
+            "<": op_less_than_m
            }[expr.op](eval(expr.v))
 
 def apply_monad_adverb(expr):
