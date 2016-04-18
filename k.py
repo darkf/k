@@ -182,10 +182,15 @@ def op_dot(x, y):
         return apply_fn(x, y.v)
     raise InternalError("op_dot")
 
+def op_underscore(x, y):
+    if is_(x, Num) and is_(y, List): # drop (n_l)
+        return List(y.v[x.v:])
+    raise InternalError("op_underscore")
+
 def apply_dyad(expr):
     if is_(expr.op, Verb): expr.op = expr.op.name
     if is_(expr.op, Function): return apply_fn(expr.op, [eval(expr.l), eval(expr.r)]) # function dyad
-    return {"+": op_plus, "*": op_star, "#": op_hash, "@": op_at, ".": op_dot
+    return {"+": op_plus, "*": op_star, "#": op_hash, "@": op_at, ".": op_dot, "_": op_underscore
            }[expr.op](eval(expr.l), eval(expr.r))
 
 def op_hash_m(x): # count (#l)
@@ -201,17 +206,18 @@ def op_bang_m(x):
         return List(list(map(Num, range(x.v))))
     raise InternalError("op_bang_m")
 
-def op_minus_m(expr):
-    if is_(expr, Num): return Num(-expr.v)
+def op_minus_m(x):
+    if is_(x, Num): return Num(-x.v)
     raise InternalError("op_minus_m")
+
+def op_star_m(x):
+    if is_(x, List): return x.v[0]
+    raise InternalError("op_star_m")
 
 def apply_monad(expr):
     if is_(expr.op, Verb): expr.op = expr.op.name
     if is_(expr.op, Function): return apply_fn(expr.op, [eval(expr.v)]) # function monad
-    return {"#": op_hash_m
-           ,",": op_comma_m
-           ,"!": op_bang_m
-           ,"-": op_minus_m
+    return {"#": op_hash_m, ",": op_comma_m, "!": op_bang_m, "-": op_minus_m, "*": op_star_m
            }[expr.op](eval(expr.v))
 
 def apply_monad_adverb(expr):
