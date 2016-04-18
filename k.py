@@ -180,6 +180,15 @@ def op_at(x, y):
 def op_dot(x, y):
     if is_(x, Function) and is_(y, List): # dot-apply
         return apply_fn(x, y.v)
+    if is_(x, List) and is_(y, List):
+        if len(y.v) == 1 and is_(y.v[0], List): # return a list indexed into x
+            return List([x.v[i.v] for i in y.v[0].v])
+        else: # index at depth
+            xs = x
+            for i in y.v:
+                print("xs:", xs, "y:", y)
+                xs = xs.v[i.v]
+            return xs
     raise InternalError("op_dot")
 
 def op_underscore(x, y):
