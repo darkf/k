@@ -27,9 +27,9 @@ _testsFailed = 0
 def t(expr):
     global _testsSucceeded, _testsFailed
     res_ok = eval(expr)
-    ast = parse.parse(expr)[0]
+    ast = parse.parse(expr)
     try:
-        res_k = k.eval(ast)
+        res_k = list(map(k.eval, ast))[-1]
     except Exception as e:
         if res_ok is None:
             # ok, both threw exceptions
@@ -57,6 +57,8 @@ def tests():
 
     t("a: 1")
     t("abc: 1+5")
+    t("1; 2")
+    t("a: 1; b: 2; a+b")
     return
 
     t("{{x}x}1")
