@@ -103,6 +103,11 @@ def op_plus(x, y):
     if is_(x, Num) and is_(y, List): return List([Num(x.v + v.v) for v in y.v])
     return elementwise(op_plus, x, y)
 
+def op_minus(x, y):
+    if is_(x, Num) and is_(y, Num): return Num(x.v - y.v)
+    if is_(x, Num) and is_(y, List): return List([Num(x.v - v.v) for v in y.v])
+    return elementwise(op_minus, x, y)
+
 def op_star(x, y):
     if is_(x, Num) and is_(y, Num): return Num(x.v * y.v)
     return elementwise(op_star, x, y)
@@ -201,7 +206,8 @@ def op_underscore(x, y):
 def apply_dyad(expr):
     if is_(expr.op, Verb): expr.op = expr.op.name
     if is_(expr.op, Function): return apply_fn(expr.op, [eval(expr.l), eval(expr.r)]) # function dyad
-    return {"+": op_plus, "*": op_star, "#": op_hash, "@": op_at, ".": op_dot, "_": op_underscore
+    return {"+": op_plus, "-": op_minus, "*": op_star, "#": op_hash, "@": op_at,
+            ".": op_dot, "_": op_underscore
            }[expr.op](eval(expr.l), eval(expr.r))
 
 def op_hash_m(x): # count (#l)
