@@ -88,6 +88,14 @@ def fold(f, xs, v):
         v = f(x, v)
     return v
 
+def scan(f, xs, v):
+    if xs.v == []: return List([])
+    r = []
+    for x in xs.v:
+        v = f(x, v)
+        r.append(v)
+    return List(r)
+
 def op_plus(x, y):
     if is_(x, Num) and is_(y, Num): return Num(x.v + y.v)
     if is_(x, Num) and is_(y, List): return List([Num(x.v + v.v) for v in y.v])
@@ -202,13 +210,17 @@ def apply_monad(expr):
 
 def apply_monad_adverb(expr):
     if is_(expr.op, Verb): expr.op = expr.op.name
-    if expr.adv == "/": # over
+    if expr.adv in ("/", "\\"): # over, scan
         xs = eval(expr.v)
         initial = xs.v[0]
         # special cased initial folding values
         if expr.op == "+": initial = Num(0)
         elif expr.op == "*": initial = Num(1)
-        return fold(lambda x, acc: eval(DyadApply(acc, expr.op, x)), xs, initial)
+
+        if expr.adv == "/": # over
+            return fold(lambda x, acc: eval(DyadApply(acc, expr.op, x)), xs, initial)
+        else:
+            return scan(lambda x, acc: eval(DyadApply(acc, expr.op, x)), xs, initial)
     raise InternalError("apply_monad_adverb")
 
 def eval(expr):

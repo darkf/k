@@ -6,10 +6,11 @@ import k
 def ast(expr, raw=False):
 	try:
 		expr = expr.replace("'", "\\'") # escape single quotes
+		expr = expr.replace("\\", "\\\\") # escape backslashes
 		output = subprocess.check_output(["node", "-p", "JSON.stringify(require('../ok/ok').parse('%s'))" % expr], stderr=subprocess.STDOUT).decode('utf-8')
 		return output if raw else json.loads(output)
 	except subprocess.CalledProcessError:
-		print("parse error")
+		print("parse error for:", expr)
 		return None
 
 def to_ast(v):

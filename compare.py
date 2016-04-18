@@ -6,6 +6,7 @@ import k, parse
 def ok_eval(expr):
     try:
         expr = expr.replace("'", "\\'") # escape single quotes
+        expr = expr.replace("\\", "\\\\") # escape backslashes
         output = subprocess.check_output(["node", "-p", "var ok=require('../ok/ok'); JSON.stringify(ok.run(ok.parse('%s'), ok.baseEnv()))" % expr], stderr=subprocess.STDOUT)
         return json.loads(output.decode('utf-8'))
     except subprocess.CalledProcessError as e:
@@ -54,6 +55,10 @@ def t(expr):
 
 def tests():
     t("1+2")
+    #t("{x*2}' 1 2 3")
+    t("+\\1 2 3")
+    t("*\\1 2 3")
+    return
 
     t("a: 1")
     t("abc: 1+5")
