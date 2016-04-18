@@ -203,6 +203,7 @@ def op_bang_m(x):
 
 def apply_monad(expr):
     if is_(expr.op, Verb): expr.op = expr.op.name
+    if is_(expr.op, Function): return apply_fn(expr.op, [eval(expr.v)]) # function monad
     return {"#": op_hash_m
            ,",": op_comma_m
            ,"!": op_bang_m
@@ -221,6 +222,8 @@ def apply_monad_adverb(expr):
             return fold(lambda x, acc: eval(DyadApply(acc, expr.op, x)), xs, initial)
         else:
             return scan(lambda x, acc: eval(DyadApply(acc, expr.op, x)), xs, initial)
+    if expr.adv == "'": # each
+        return List(list(map(lambda x: eval(MonadApply(expr.op, x)), eval(expr.v).v)))
     raise InternalError("apply_monad_adverb")
 
 def eval(expr):

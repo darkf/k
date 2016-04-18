@@ -5,8 +5,8 @@ import k
 
 def ast(expr, raw=False):
 	try:
-		expr = expr.replace("'", "\\'") # escape single quotes
 		expr = expr.replace("\\", "\\\\") # escape backslashes
+		expr = expr.replace("'", "\\'") # escape single quotes
 		output = subprocess.check_output(["node", "-p", "JSON.stringify(require('../ok/ok').parse('%s'))" % expr], stderr=subprocess.STDOUT).decode('utf-8')
 		return output if raw else json.loads(output)
 	except subprocess.CalledProcessError:
