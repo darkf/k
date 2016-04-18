@@ -18,7 +18,7 @@ AdverbMonadApply = node('AdverbMonadApply', 'adv op v')
 AdverbDyadApply = node('AdverbDyadApply', 'adv l op r')
 Function = node('Function', 'args body')
 Var = node('Var', 'name')
-Verb = node('Verb', 'name')
+Verb = node('Verb', 'name forcemonad')
 Assign = node('Assign', 'name v')
 
 is_ = isinstance
@@ -201,12 +201,17 @@ def op_bang_m(x):
         return List(list(map(Num, range(x.v))))
     raise InternalError("op_bang_m")
 
+def op_minus_m(expr):
+    if is_(expr, Num): return Num(-expr.v)
+    raise InternalError("op_minus_m")
+
 def apply_monad(expr):
     if is_(expr.op, Verb): expr.op = expr.op.name
     if is_(expr.op, Function): return apply_fn(expr.op, [eval(expr.v)]) # function monad
     return {"#": op_hash_m
            ,",": op_comma_m
            ,"!": op_bang_m
+           ,"-": op_minus_m
            }[expr.op](eval(expr.v))
 
 def apply_monad_adverb(expr):

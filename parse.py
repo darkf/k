@@ -22,7 +22,9 @@ def to_ast(v):
 			if 'l' in v and v['l'] is not None: return k.DyadApply(to_ast(v['l']), v['v'], to_ast(v['r']))
 			else: return k.MonadApply(v['v'], to_ast(v['r']))
 		else: # verb
-			return k.Verb(v['v'])
+			forcemonad = 'forcemonad' in v and v['forcemonad'] == True
+			if forcemonad: v['v'] = v['v'][:-1]
+			return k.Verb(v['v'], forcemonad)
 	if v['t'] == 9:
 		if 'l' in v and v['l'] is not None: return k.AdverbDyadApply(v['v'], to_ast(v['l']), to_ast(v['verb']), to_ast(v['r']))
 		return k.AdverbMonadApply(v['v'], to_ast(v['verb']), to_ast(v['r']))

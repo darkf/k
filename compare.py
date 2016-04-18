@@ -48,6 +48,7 @@ def t(expr):
     if res_k != res_ok:
         print(red+"FAIL"+reset+": Got %r, expected %r for: %s" % (res_k, res_ok, expr))
         print("AST: %r" % ast)
+        print("Raw AST: %s" % parse.ast(expr, raw=True))
         _testsFailed += 1
     else:
         print(green+"SUCC"+reset+": Got %r, expected %r for: %s" % (res_k, res_ok, expr))
@@ -56,6 +57,7 @@ def t(expr):
 def tests():
     t("1+2")
     t("{x*2}' 1 2 3")
+    t("-:' 1 2 3")
     return
 
     t("+\\1 2 3")
